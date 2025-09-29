@@ -1,0 +1,31 @@
+# Environment
+.env
+venv/
+env/
+*.pyc
+__pycache__/
+
+# Credentials
+credentials.json
+firebase-adminsdk.json
+*.pem
+*.key
+
+# Uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/

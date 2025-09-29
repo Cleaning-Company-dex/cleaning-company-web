@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard - {{ business_name }}{% endblock %}
+
+{% block content %}
+<h2>Welcome back, {{ session.user_name }}!</h2>
+
+<!-- Stats -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="background: #3498db; color: white;">
+        <h4>Jobs Today</h4>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_today }}</p>
+    </div>
+    
+    <div class="card" style="background: #27ae60; color: white;">
+        <h4>Completed This Week</h4>
+        <p style="font-size: 2rem; font-weight: bold;">{{ completed_week }}</p>
+    </div>
+    
+    <div class="card" style="background: #e74c3c; color: white;">
+        <h4>Pending This Week</h4>
+        <p style="font-size: 2rem; font-weight: bold;">{{ total_week - completed_week }}</p>
+    </div>
+</div>
+
+<!-- Today's Schedule -->
+<div class="card">
+    <h3>Today's Schedule</h3>
+    {% if todays_jobs %}
+        <div style="display: grid; gap: 1rem;">
+            {% for job in todays_jobs %}
+            <div class="card" style="border-left: 4px solid {% if job.Completed == 'yes' %}#27ae60{% elif job.Status == 'in_progress' %}#f39c12{% else %}#3498db{% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <h4>{{ job.Time }} - {{ job.Customer_Name }}</h4>
+                        <p style="color: #666; margin: 0.5rem 0;">
+                            📍 {{ job.Address }}<br>
+                            💰 {{ job.Price | currency }} - {{ job.Service_Type }}
+                        </p>
+                        {% if job.Notes %}
+                            <p style="background: #fff3cd; padding: 0.5rem; border-radius: 5px; margin-top: 0.5rem;">
+                                📝 {{ job.Notes }}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if job.Completed == 'yes' %}
+                            <span class="btn btn-success" style="cursor: default;">✅ Completed</span>
+                        {% elif job.Status == 'in_progress' %}
+                            <a href="{{ url_for('employee.complete_job', job_id=job.ID) }}" class="btn btn-primary">
+                                Complete Job
+                            </a>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('employee.checkin', job_id=job.ID) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-primary">Check In</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No jobs scheduled for today. Enjoy your day off!</p>
+    {% endif %}
+</div>
+
+<!-- Quick Links -->
+<div class="card">
+    <h3>Quick Links</h3>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{{ url_for('employee.schedule') }}" class="btn btn-primary">View Full Schedule</a>
+        <a href="{{ url_for('employee.profile') }}" class="btn" style="background: #95a5a6; color: white;">My Profile</a>
+    </div>
+</div>
+{% endblock %}

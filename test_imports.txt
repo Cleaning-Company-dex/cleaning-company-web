@@ -1,0 +1,12 @@
+try:
+    import flask
+    print("✅ Flask installed")
+    import gspread
+    print("✅ Google Sheets installed")
+    import google.generativeai
+    print("✅ Gemini AI installed")
+    from dotenv import load_dotenv
+    print("✅ Python-dotenv installed")
+    print("\n🎉 All packages installed successfully!")
+except ImportError as e:
+    print(f"❌ Error: {e}")

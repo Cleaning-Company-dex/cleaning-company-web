@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Cleaning Business</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #718096;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .stat-card.primary { border-left: 4px solid #667eea; }
+        .stat-card.success { border-left: 4px solid #48bb78; }
+        .stat-card.warning { border-left: 4px solid #ed8936; }
+        .stat-card.danger { border-left: 4px solid #e53e3e; }
+        
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: #f7fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            font-size: 1.125rem;
+            color: #2d3748;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f7fafc;
+            color: #718096;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table td {
+            padding: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .table tr:hover {
+            background: #f7fafc;
+        }
+        
+        /* Status badges */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .badge-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .badge-warning {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        
+        .badge-danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .badge-info {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #4a5568;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .action-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .action-btn .icon {
+            font-size: 1.5rem;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+        }
+        
+        .empty-state p {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🧹 Admin Dashboard</h1>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.schedule') }}" class="btn btn-primary">📅 Schedule</a>
+            <a href="{{ url_for('admin.customers') }}" class="btn btn-primary">👥 Customers</a>
+            <a href="{{ url_for('admin.employees') }}" class="btn btn-primary">👷 Employees</a>
+            <a href="{{ url_for('admin.quotes') }}" class="btn btn-primary">💰 Quotes</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">🚪 Logout</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{{ url_for('admin.add_customer') }}" class="action-btn">
+                <span class="icon">➕</span>
+                <span>Add Customer</span>
+            </a>
+            <a href="{{ url_for('admin.add_job') }}" class="action-btn">
+                <span class="icon">📋</span>
+                <span>Schedule Job</span>
+            </a>
+            <a href="{{ url_for('admin.add_employee') }}" class="action-btn">
+                <span class="icon">👤</span>
+                <span>Add Employee</span>
+            </a>
+            <a href="{{ url_for('admin.quotes') }}" class="action-btn">
+                <span class="icon">📊</span>
+                <span>View Quotes</span>
+            </a>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <h3>Total Customers</h3>
+                <div class="stat-value">{{ stats.get('total_customers', 0) }}</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Today's Jobs</h3>
+                <div class="stat-value">{{ stats.get('jobs_today', 0) }}</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Pending Quotes</h3>
+                <div class="stat-value">{{ stats.get('pending_quotes', 0) }}</div>
+            </div>
+            <div class="stat-card danger">
+                <h3>Revenue Today</h3>
+                <div class="stat-value">${{ "%.2f"|format(stats.get('revenue_today', 0)) }}</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Revenue This Month</h3>
+                <div class="stat-value">${{ "%.2f"|format(stats.get('revenue_month', 0)) }}</div>
+            </div>
+            <div class="stat-card primary">
+                <h3>Active Employees</h3>
+                <div class="stat-value">{{ stats.get('active_employees', 0) }}</div>
+            </div>
+            <div class="stat-card warning">
+                <h3>Upcoming Jobs</h3>
+                <div class="stat-value">{{ stats.get('upcoming_jobs', 0) }}</div>
+            </div>
+            <div class="stat-card success">
+                <h3>Completed Today</h3>
+                <div class="stat-value">{{ stats.get('completed_today', 0) }}</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Today's Jobs -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📅 Today's Jobs</h2>
+                    <a href="{{ url_for('admin.schedule') }}" class="btn btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if todays_jobs %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Customer</th>
+                                    <th>Employee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in todays_jobs[:5] %}
+                                <tr>
+                                    <td>{{ job.get('Time', '') }}</td>
+                                    <td>{{ job.get('Customer_Name', '') }}</td>
+                                    <td>{{ job.get('Employee', '') }}</td>
+                                    <td>
+                                        {% if job.get('Completed') == 'yes' %}
+                                            <span class="badge badge-success">Completed</span>
+                                        {% elif job.get('Status') == 'in_progress' %}
+                                            <span class="badge badge-warning">In Progress</span>
+                                        {% else %}
+                                            <span class="badge badge-info">Scheduled</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No jobs scheduled for today</p>
+                            <a href="{{ url_for('admin.add_job') }}" class="btn btn-primary">Schedule a Job</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pending Quotes -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>💰 Pending Quotes</h2>
+                    <a href="{{ url_for('admin.quotes') }}" class="btn btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if pending_quotes %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Price</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quote in pending_quotes %}
+                                <tr>
+                                    <td>{{ quote.get('Name', '') }}</td>
+                                    <td>{{ quote.get('Phone', '') }}</td>
+                                    <td>${{ quote.get('Calculated_Price', 0) }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin.convert_quote', quote_id=quote['ID']) }}" style="display:inline;">
+                                            <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                                Convert
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No pending quotes</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>💳 Recent Payments</h2>
+                </div>
+                <div class="card-body">
+                    {% if recent_payments %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.get('Customer_Name', '') }}</td>
+                                    <td>${{ payment.get('Amount', 0) }}</td>
+                                    <td>{{ payment.get('Method', '') }}</td>
+                                    <td>{{ payment.get('Date', '')[:10] if payment.get('Date') else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No recent payments</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 Recent Jobs</h2>
+                    <a href="{{ url_for('admin.schedule') }}" class="btn btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_jobs %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Employee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in recent_jobs[:5] %}
+                                <tr>
+                                    <td>{{ job.get('Date', '') }}</td>
+                                    <td>{{ job.get('Customer_Name', '') }}</td>
+                                    <td>{{ job.get('Employee', '') }}</td>
+                                    <td>
+                                        {% if job.get('Completed') == 'yes' %}
+                                            <span class="badge badge-success">Completed</span>
+                                        {% else %}
+                                            <span class="badge badge-info">Scheduled</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No recent jobs</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

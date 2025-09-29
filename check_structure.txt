@@ -1,0 +1,58 @@
+# check_structure.py
+import os
+import json
+
+def get_project_structure(start_path='.'):
+    """
+    Get complete project structure as a dictionary
+    """
+    result = {
+        'folders': [],
+        'files': {
+            'python': [],
+            'html': [],
+            'css': [],
+            'js': [],
+            'other': []
+        }
+    }
+    
+    for root, dirs, files in os.walk(start_path):
+        # Clean path for display
+        clean_root = root.replace(start_path, '').lstrip('/')
+        
+        # Add folders
+        for d in dirs:
+            if not d.startswith('.') and d != '__pycache__':
+                folder_path = os.path.join(clean_root, d) if clean_root else d
+                result['folders'].append(folder_path)
+        
+        # Categorize files
+        for f in files:
+            if f.startswith('.') or f.endswith('.pyc'):
+                continue
+                
+            file_path = os.path.join(clean_root, f) if clean_root else f
+            
+            if f.endswith('.py'):
+                result['files']['python'].append(file_path)
+            elif f.endswith('.html'):
+                result['files']['html'].append(file_path)
+            elif f.endswith('.css'):
+                result['files']['css'].append(file_path)
+            elif f.endswith('.js'):
+                result['files']['js'].append(file_path)
+            else:
+                result['files']['other'].append(file_path)
+    
+    return result
+
+# Run it
+structure = get_project_structure('.')
+print(json.dumps(structure, indent=2))
+
+# Save to file for easy viewing
+with open('my_structure.json', 'w') as f:
+    json.dump(structure, f, indent=2)
+
+print("\nStructure saved to my_structure.json")

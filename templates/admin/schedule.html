@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Schedule - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Schedule Management</h1>
+                <div class="space-x-4">
+                    <a href="/admin/schedule/add" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                        + Schedule Job
+                    </a>
+                    <a href="/admin/dashboard" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="px-6">
+        <div class="grid grid-cols-7 gap-4">
+            {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+            <div class="bg-white rounded-lg shadow p-4">
+                <h3 class="font-bold text-center mb-3">{{ day }}</h3>
+                <div class="space-y-2">
+                    {% for job in jobs_by_day.get(day, []) %}
+                    <div class="p-2 bg-blue-50 rounded text-xs">
+                        <div class="font-medium">{{ job.Time }}</div>
+                        <div>{{ job.Customer_Name }}</div>
+                        <div class="text-gray-600">{{ job.Employee }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

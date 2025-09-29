@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Reports & Analytics</h1>
+                <a href="/admin/dashboard" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="px-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Revenue Summary -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Revenue Summary</h2>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span>Today:</span>
+                    <span class="font-bold">${{ "%.2f"|format(revenue_today) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>This Week:</span>
+                    <span class="font-bold">${{ "%.2f"|format(revenue_week) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>This Month:</span>
+                    <span class="font-bold">${{ "%.2f"|format(revenue_month) }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Job Statistics -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Job Statistics</h2>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span>Total Jobs:</span>
+                    <span class="font-bold">{{ total_jobs }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Completed:</span>
+                    <span class="font-bold">{{ completed_jobs }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Pending:</span>
+                    <span class="font-bold">{{ pending_jobs }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Customers -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Top Customers</h2>
+            <div class="space-y-2">
+                {% for customer in top_customers[:5] %}
+                <div class="flex justify-between">
+                    <span>{{ customer.name }}</span>
+                    <span class="text-gray-600">{{ customer.job_count }} jobs</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500">No customer data available</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Employee Performance -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-bold mb-4">Employee Performance</h2>
+            <div class="space-y-2">
+                {% for employee in employee_stats[:5] %}
+                <div class="flex justify-between">
+                    <span>{{ employee.name }}</span>
+                    <span class="text-gray-600">{{ employee.jobs_completed }} completed</span>
+                </div>
+                {% else %}
+                <p class="text-gray-500">No employee data available</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

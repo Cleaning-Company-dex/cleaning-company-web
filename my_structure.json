@@ -1,0 +1,78 @@
+{
+  "folders": [
+    "utils",
+    "templates",
+    "scripts",
+    "static",
+    "routes",
+    "tests",
+    "modules",
+    "templates/customer",
+    "templates/employee",
+    "templates/admin",
+    "templates/errors",
+    "templates/public",
+    "templates/components",
+    "static/img",
+    "static/uploads",
+    "static/css",
+    "static/js",
+    "static/img/icons"
+  ],
+  "files": {
+    "python": [
+      "app_backup.py",
+      "create_structure.py",
+      "config.py",
+      "run.py",
+      "app.py",
+      "app_updated.py",
+      "test_system.py",
+      "utils/helpers.py",
+      "utils/validators.py",
+      "utils/decorators.py",
+      "utils/__init__.py",
+      "scripts/init_sheets_only.py",
+      "scripts/init_database.py",
+      "scripts/load_test_data.py",
+      "routes/public.py",
+      "routes/admin.py",
+      "routes/__init__.py",
+      "routes/employee.py",
+      "routes/customer.py",
+      "modules/drive_storage.py",
+      "modules/sheets_db.py",
+      "modules/gemini_chat.py",
+      "modules/__init__.py",
+      "modules/email_service.py"
+    ],
+    "html": [
+      "templates/owner_dashboard.html",
+      "templates/owner_login.html",
+      "templates/customer/login.html",
+      "templates/customer/dashboard.html",
+      "templates/employee/login.html",
+      "templates/employee/dashboard.html",
+      "templates/admin/login.html",
+      "templates/admin/dashboard.html",
+      "templates/public/login.html",
+      "templates/public/quote_result.html",
+      "templates/public/quote.html"
+    ],
+    "css": [
+      "static/css/main.css"
+    ],
+    "js": [
+      "static/js/main.js"
+    ],
+    "other": [
+      "test_imports.txt",
+      "test_imports.py.txt",
+      "credentials.json",
+      "init_sheets_only.txt",
+      "requirements.txt",
+      "check_structure.txt",
+      "templates/public/index.html.txt"
+    ]
+  }
+}

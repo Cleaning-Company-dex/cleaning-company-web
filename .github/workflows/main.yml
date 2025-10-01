@@ -13,17 +13,123 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Execute update script on PythonAnywhere
+      - name: Deploy to PythonAnywhere
+        env:
+          PA_API_TOKEN: ${{ secrets.PYTHONANYWHERE_API_TOKEN }}
+          PA_USERNAME: yerielcruz18
+          PA_DOMAIN: yerielcruz18.pythonanywhere.com
         run: |
-          curl -X POST \
-            -H "Authorization: Token ${{ secrets.PYTHONANYWHERE_API_TOKEN }}" \
-            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/files/path/home/yerielcruz18/Cleaning_Services/update.sh/execute"
+          # Instalar pa_autoconfigure_django (herramienta CLI de PythonAnywhere)
+          pip install pythonanywhere
 
-      - name: Reload web app
+          # Crear un script Python para actualizar el código
+          cat << 'EOF' > deploy_script.py
+          import os
+          import requests
+          from datetime import datetime
+
+          # Configuración
+          username = os.environ['PA_USERNAME']
+          token = os.environ['PA_API_TOKEN']
+          domain = os.environ['PA_DOMAIN']
+
+          headers = {
+              'Authorization': f'Token {token}',
+          }
+
+          base_url = f'https://www.pythonanywhere.com/api/v0/user/{username}'
+
+          print(f"[{datetime.now()}] Iniciando deployment para {domain}")
+
+          # Crear/actualizar el script de actualización vía API
+          update_script_content = """#!/bin/bash
+          cd /home/yerielcruz18/Cleaning_Services
+          git pull origin main
+          pip install -r requirements.txt --user
+          python manage.py collectstatic --noinput
+          python manage.py migrate
+          """
+
+          # Subir el script de actualización
+          files_url = f"{base_url}/files/path/home/{username}/update_deploy.sh"
+          response = requests.post(
+              files_url,
+              headers=headers,
+              files={'content': update_script_content}
+          )
+
+          if response.status_code in [200, 201]:
+              print("✓ Script de actualización creado/actualizado")
+          else:
+              print(f"✗ Error al crear script: {response.status_code}")
+              print(response.text)
+
+          # Crear una consola para ejecutar el script
+          console_url = f"{base_url}/consoles/"
+          response = requests.post(
+              console_url,
+              headers=headers,
+              json={
+                  "executable": "bash",
+                  "arguments": "",
+                  "working_directory": f"/home/{username}/Cleaning_Services"
+              }
+          )
+
+          if response.status_code == 201:
+              console_id = response.json()['id']
+              print(f"✓ Consola creada con ID: {console_id}")
+              
+              # Enviar comandos a la consola
+              console_input_url = f"{base_url}/consoles/{console_id}/send_input/"
+              
+              # Ejecutar el script de actualización
+              commands = [
+                  "cd ~/Cleaning_Services",
+                  "git pull origin main",
+                  "pip install -r requirements.txt --user",
+                  "python manage.py collectstatic --noinput",
+                  "python manage.py migrate",
+                  "exit"
+              ]
+              
+              for cmd in commands:
+                  response = requests.post(
+                      console_input_url,
+                      headers=headers,
+                      json={"input": f"{cmd}\n"}
+                  )
+                  print(f"  Ejecutando: {cmd}")
+              
+              print("✓ Comandos enviados a la consola")
+          else:
+              print(f"✗ Error al crear consola: {response.status_code}")
+              print(response.text)
+
+          # Recargar la webapp
+          reload_url = f"{base_url}/webapps/{domain}/reload/"
+          response = requests.post(reload_url, headers=headers)
+
+          if response.status_code == 200:
+              print(f"✓ Web app {domain} recargada exitosamente")
+          else:
+              print(f"✗ Error al recargar webapp: {response.status_code}")
+              print(response.text)
+              exit(1)
+
+          print(f"[{datetime.now()}] Deployment completado!")
+          EOF
+
+          # Ejecutar el script
+          python deploy_script.py
+
+      - name: Verify deployment
         run: |
-          curl -X POST \
-            -H "Authorization: Token ${{ secrets.PYTHONANYWHERE_API_TOKEN }}" \
-            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/webapps/yerielcruz18.pythonanywhere.com/reload/"
-
-      - name: Notify deployment
-        run: echo "Deployment completed successfully!"
+          # Verificar que el sitio esté respondiendo
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.PA_DOMAIN }})
+          if [ $response -eq 200 ]; then
+            echo "✅ Sitio funcionando correctamente (HTTP $response)"
+          else
+            echo "⚠️ Sitio devolvió HTTP $response"
+            exit 1
+          fi

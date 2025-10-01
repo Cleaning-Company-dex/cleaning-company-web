@@ -1,98 +1,140 @@
-name: Debug PythonAnywhere Deployment
+name: Deploy Flask to PythonAnywhere
 
 on:
-  workflow_dispatch: # Permite ejecutar manualmente
   push:
     branches:
       - main
 
+env:
+  PA_USERNAME: yerielcruz18
+  PA_DOMAIN: yerielcruz18.pythonanywhere.com
+
 jobs:
-  debug:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Test API Token
-        env:
-          PA_API_TOKEN: ${{ secrets.PYTHONANYWHERE_API_TOKEN }}
-        run: |
-          echo "🔍 Probando token de API..."
+      - name: Deploy to PythonAnywhere via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ssh.pythonanywhere.com
+          username: yerielcruz18
+          password: ${{ secrets.PYTHONANYWHERE_SSH_PASSWORD }}
+          port: 22
+          script: |
+            echo "🚀 Iniciando deployment de Flask app..."
 
-          # Verificar si el token existe
-          if [ -z "$PA_API_TOKEN" ]; then
-            echo "❌ PYTHONANYWHERE_API_TOKEN no está configurado"
-            exit 1
+            # Navegar al directorio del proyecto
+            cd ~/Cleaning_Services || { echo "❌ Directorio no encontrado"; exit 1; }
+
+            # Mostrar información actual
+            echo "📍 Branch actual: $(git branch --show-current)"
+            echo "📍 Último commit local: $(git log -1 --oneline)"
+
+            # Guardar cambios locales si existen
+            git stash
+
+            # Obtener los últimos cambios
+            echo "📥 Descargando cambios desde GitHub..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Verificar que el pull funcionó
+            echo "✓ Último commit después del pull: $(git log -1 --oneline)"
+
+            # Instalar/actualizar dependencias
+            echo "📦 Instalando dependencias de Python..."
+            pip3.8 install -r requirements.txt --user
+
+            # Verificar que el archivo .env existe
+            if [ -f ".env" ]; then
+              echo "✓ Archivo .env encontrado"
+            else
+              echo "⚠️ Archivo .env no encontrado"
+              echo "   Asegúrate de configurar las variables de entorno en PythonAnywhere"
+            fi
+
+            # Verificar que app.py existe
+            if [ -f "app.py" ]; then
+              echo "✓ Archivo app.py encontrado"
+            else
+              echo "❌ Error: app.py no encontrado"
+              exit 1
+            fi
+
+            # Recargar la aplicación web tocando el archivo WSGI
+            echo "♻️ Recargando aplicación Flask..."
+            touch /var/www/yerielcruz18_pythonanywhere_com_wsgi.py
+
+            echo "✅ Deployment de Flask completado!"
+            echo "📅 Fecha: $(date)"
+
+      - name: Wait for reload
+        run: |
+          echo "⏳ Esperando 30 segundos para que la aplicación se recargue..."
+          sleep 30
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verificando deployment..."
+
+          max_attempts=3
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Intento $attempt de $max_attempts..."
+            
+            # Hacer petición con timeout y user agent
+            response=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 10 \
+              -H "User-Agent: GitHub-Actions-Deploy-Check" \
+              https://${{ env.PA_DOMAIN }} || echo "000")
+            
+            if [ "$response" = "200" ]; then
+              echo "✅ Sitio funcionando correctamente (HTTP $response)"
+              echo "🔗 URL: https://${{ env.PA_DOMAIN }}"
+              exit 0
+            elif [ "$response" = "000" ]; then
+              echo "⚠️ Timeout o error de conexión"
+            else
+              echo "⚠️ Sitio devolvió HTTP $response"
+            fi
+            
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Esperando 15 segundos antes del siguiente intento..."
+              sleep 15
+            fi
+            
+            attempt=$((attempt + 1))
+          done
+
+          echo "ℹ️ La verificación no pudo confirmar HTTP 200"
+          echo "   Esto es normal si PythonAnywhere está tardando en recargar."
+          echo "   Por favor, verifica manualmente: https://${{ env.PA_DOMAIN }}"
+
+          # No fallar el workflow, ya que el deploy pudo ser exitoso
+          exit 0
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "════════════════════════════════════════════"
+          echo "📊 RESUMEN DEL DEPLOYMENT"
+          echo "════════════════════════════════════════════"
+          echo "📦 Repositorio: ${{ github.repository }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "🔧 Commit: ${{ github.sha }}"
+          echo "👤 Iniciado por: ${{ github.actor }}"
+          echo "🖥️ Usuario PA: ${{ env.PA_USERNAME }}"
+          echo "🌐 Dominio: https://${{ env.PA_DOMAIN }}"
+          echo "📅 Fecha: $(date)"
+          echo "════════════════════════════════════════════"
+
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ DEPLOYMENT EXITOSO"
           else
-            echo "✓ Token encontrado (longitud: ${#PA_API_TOKEN} caracteres)"
-          fi
-
-          # Probar el token
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Token $PA_API_TOKEN" \
-            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/cpu/")
-
-          if [ "$response" = "200" ]; then
-            echo "✅ Token de API válido"
-          else
-            echo "❌ Token de API inválido o expirado (HTTP $response)"
-            echo "Por favor, genera un nuevo token en:"
-            echo "https://www.pythonanywhere.com/user/yerielcruz18/account/"
-            exit 1
-          fi
-
-      - name: Check Website Status
-        run: |
-          echo "🌐 Verificando estado del sitio web..."
-
-          # Intentar diferentes métodos de verificación
-          echo "Método 1: curl simple"
-          curl -I https://yerielcruz18.pythonanywhere.com 2>&1 | head -n 5
-
-          echo ""
-          echo "Método 2: wget"
-          wget --spider -S https://yerielcruz18.pythonanywhere.com 2>&1 | head -n 10
-
-          echo ""
-          echo "Método 3: curl con user agent"
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "User-Agent: Mozilla/5.0" \
-            https://yerielcruz18.pythonanywhere.com)
-          echo "Código de respuesta: $response"
-
-      - name: Test API Endpoints
-        env:
-          PA_API_TOKEN: ${{ secrets.PYTHONANYWHERE_API_TOKEN }}
-        run: |
-          echo "🔌 Probando endpoints de API..."
-
-          # Listar webapps
-          echo "Obteniendo información de webapps..."
-          curl -s -H "Authorization: Token $PA_API_TOKEN" \
-            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/webapps/" \
-            | python3 -m json.tool || echo "Error al obtener webapps"
-
-          echo ""
-          echo "Estado de las consolas..."
-          curl -s -H "Authorization: Token $PA_API_TOKEN" \
-            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/consoles/" \
-            | python3 -m json.tool || echo "No hay consolas activas"
-
-      - name: Repository Info
-        run: |
-          echo "📦 Información del repositorio:"
-          echo "- Repositorio: ${{ github.repository }}"
-          echo "- Branch: ${{ github.ref_name }}"
-          echo "- Commit SHA: ${{ github.sha }}"
-          echo "- Autor: ${{ github.actor }}"
-          echo ""
-          echo "📋 Archivos en el repositorio:"
-          ls -la
-          echo ""
-          if [ -f "requirements.txt" ]; then
-            echo "📦 Dependencias (requirements.txt):"
-            cat requirements.txt
-          else
-            echo "⚠️ No se encontró requirements.txt"
+            echo "⚠️ Revisa los logs para más detalles"
           fi

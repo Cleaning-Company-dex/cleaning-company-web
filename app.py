@@ -1,11 +1,13 @@
-from flask import Flask, render_template_string, request, redirect, url_for, flash, session, jsonify
-import os
-from modules.sheets_db import SheetsDatabase
-from modules.gemini_chat import GeminiChat
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
 import json
+import os
+from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+from flask import (Flask, flash, jsonify, redirect, render_template_string,
+                   request, session, url_for)
+
+from modules.gemini_chat import GeminiChat
+from modules.sheets_db import SheetsDatabase
 # Import the admin blueprint
 from routes.admin import admin_bp
 
@@ -1705,9 +1707,11 @@ def employee_dashboard():
     '''
 
 @app.route('/logout')
+
 def logout():
     session.clear()
     return redirect('/')
 
 if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

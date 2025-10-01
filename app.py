@@ -1707,7 +1707,6 @@ def employee_dashboard():
     '''
 
 @app.route('/logout')
-
 def logout():
     session.clear()
     return redirect('/')

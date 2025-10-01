@@ -1,0 +1,34 @@
+name: Deploy to PythonAnywhere
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull latest code on PythonAnywhere
+        run: |
+          curl -X POST \
+            -H "Authorization: Token ${{ secrets.PYTHONANYWHERE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "command": "cd /home/yerielcruz18/Cleaning_Services && git pull origin main",
+              "input": ""
+            }' \
+            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/consoles/shared/"
+
+      - name: Reload web app
+        run: |
+          curl -X POST \
+            -H "Authorization: Token ${{ secrets.PYTHONANYWHERE_API_TOKEN }}" \
+            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/webapps/yerielcruz18.pythonanywhere.com/reload/"
+
+      - name: Notify deployment
+        run: echo "✅ Deployment completed successfully!"

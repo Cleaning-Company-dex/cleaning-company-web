@@ -1,135 +1,98 @@
-name: Deploy to PythonAnywhere
+name: Debug PythonAnywhere Deployment
 
 on:
+  workflow_dispatch: # Permite ejecutar manualmente
   push:
     branches:
       - main
 
 jobs:
-  deploy:
+  debug:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to PythonAnywhere
+      - name: Test API Token
         env:
           PA_API_TOKEN: ${{ secrets.PYTHONANYWHERE_API_TOKEN }}
-          PA_USERNAME: yerielcruz18
-          PA_DOMAIN: yerielcruz18.pythonanywhere.com
         run: |
-          # Instalar pa_autoconfigure_django (herramienta CLI de PythonAnywhere)
-          pip install pythonanywhere
+          echo "🔍 Probando token de API..."
 
-          # Crear un script Python para actualizar el código
-          cat << 'EOF' > deploy_script.py
-          import os
-          import requests
-          from datetime import datetime
-
-          # Configuración
-          username = os.environ['PA_USERNAME']
-          token = os.environ['PA_API_TOKEN']
-          domain = os.environ['PA_DOMAIN']
-
-          headers = {
-              'Authorization': f'Token {token}',
-          }
-
-          base_url = f'https://www.pythonanywhere.com/api/v0/user/{username}'
-
-          print(f"[{datetime.now()}] Iniciando deployment para {domain}")
-
-          # Crear/actualizar el script de actualización vía API
-          update_script_content = """#!/bin/bash
-          cd /home/yerielcruz18/Cleaning_Services
-          git pull origin main
-          pip install -r requirements.txt --user
-          python manage.py collectstatic --noinput
-          python manage.py migrate
-          """
-
-          # Subir el script de actualización
-          files_url = f"{base_url}/files/path/home/{username}/update_deploy.sh"
-          response = requests.post(
-              files_url,
-              headers=headers,
-              files={'content': update_script_content}
-          )
-
-          if response.status_code in [200, 201]:
-              print("✓ Script de actualización creado/actualizado")
-          else:
-              print(f"✗ Error al crear script: {response.status_code}")
-              print(response.text)
-
-          # Crear una consola para ejecutar el script
-          console_url = f"{base_url}/consoles/"
-          response = requests.post(
-              console_url,
-              headers=headers,
-              json={
-                  "executable": "bash",
-                  "arguments": "",
-                  "working_directory": f"/home/{username}/Cleaning_Services"
-              }
-          )
-
-          if response.status_code == 201:
-              console_id = response.json()['id']
-              print(f"✓ Consola creada con ID: {console_id}")
-              
-              # Enviar comandos a la consola
-              console_input_url = f"{base_url}/consoles/{console_id}/send_input/"
-              
-              # Ejecutar el script de actualización
-              commands = [
-                  "cd ~/Cleaning_Services",
-                  "git pull origin main",
-                  "pip install -r requirements.txt --user",
-                  "python manage.py collectstatic --noinput",
-                  "python manage.py migrate",
-                  "exit"
-              ]
-              
-              for cmd in commands:
-                  response = requests.post(
-                      console_input_url,
-                      headers=headers,
-                      json={"input": f"{cmd}\n"}
-                  )
-                  print(f"  Ejecutando: {cmd}")
-              
-              print("✓ Comandos enviados a la consola")
-          else:
-              print(f"✗ Error al crear consola: {response.status_code}")
-              print(response.text)
-
-          # Recargar la webapp
-          reload_url = f"{base_url}/webapps/{domain}/reload/"
-          response = requests.post(reload_url, headers=headers)
-
-          if response.status_code == 200:
-              print(f"✓ Web app {domain} recargada exitosamente")
-          else:
-              print(f"✗ Error al recargar webapp: {response.status_code}")
-              print(response.text)
-              exit(1)
-
-          print(f"[{datetime.now()}] Deployment completado!")
-          EOF
-
-          # Ejecutar el script
-          python deploy_script.py
-
-      - name: Verify deployment
-        run: |
-          # Verificar que el sitio esté respondiendo
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.PA_DOMAIN }})
-          if [ $response -eq 200 ]; then
-            echo "✅ Sitio funcionando correctamente (HTTP $response)"
-          else
-            echo "⚠️ Sitio devolvió HTTP $response"
+          # Verificar si el token existe
+          if [ -z "$PA_API_TOKEN" ]; then
+            echo "❌ PYTHONANYWHERE_API_TOKEN no está configurado"
             exit 1
+          else
+            echo "✓ Token encontrado (longitud: ${#PA_API_TOKEN} caracteres)"
+          fi
+
+          # Probar el token
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Token $PA_API_TOKEN" \
+            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/cpu/")
+
+          if [ "$response" = "200" ]; then
+            echo "✅ Token de API válido"
+          else
+            echo "❌ Token de API inválido o expirado (HTTP $response)"
+            echo "Por favor, genera un nuevo token en:"
+            echo "https://www.pythonanywhere.com/user/yerielcruz18/account/"
+            exit 1
+          fi
+
+      - name: Check Website Status
+        run: |
+          echo "🌐 Verificando estado del sitio web..."
+
+          # Intentar diferentes métodos de verificación
+          echo "Método 1: curl simple"
+          curl -I https://yerielcruz18.pythonanywhere.com 2>&1 | head -n 5
+
+          echo ""
+          echo "Método 2: wget"
+          wget --spider -S https://yerielcruz18.pythonanywhere.com 2>&1 | head -n 10
+
+          echo ""
+          echo "Método 3: curl con user agent"
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "User-Agent: Mozilla/5.0" \
+            https://yerielcruz18.pythonanywhere.com)
+          echo "Código de respuesta: $response"
+
+      - name: Test API Endpoints
+        env:
+          PA_API_TOKEN: ${{ secrets.PYTHONANYWHERE_API_TOKEN }}
+        run: |
+          echo "🔌 Probando endpoints de API..."
+
+          # Listar webapps
+          echo "Obteniendo información de webapps..."
+          curl -s -H "Authorization: Token $PA_API_TOKEN" \
+            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/webapps/" \
+            | python3 -m json.tool || echo "Error al obtener webapps"
+
+          echo ""
+          echo "Estado de las consolas..."
+          curl -s -H "Authorization: Token $PA_API_TOKEN" \
+            "https://www.pythonanywhere.com/api/v0/user/yerielcruz18/consoles/" \
+            | python3 -m json.tool || echo "No hay consolas activas"
+
+      - name: Repository Info
+        run: |
+          echo "📦 Información del repositorio:"
+          echo "- Repositorio: ${{ github.repository }}"
+          echo "- Branch: ${{ github.ref_name }}"
+          echo "- Commit SHA: ${{ github.sha }}"
+          echo "- Autor: ${{ github.actor }}"
+          echo ""
+          echo "📋 Archivos en el repositorio:"
+          ls -la
+          echo ""
+          if [ -f "requirements.txt" ]; then
+            echo "📦 Dependencias (requirements.txt):"
+            cat requirements.txt
+          else
+            echo "⚠️ No se encontró requirements.txt"
           fi
